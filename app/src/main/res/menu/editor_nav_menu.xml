@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_filters"
+        android:title="@string/tab_filters"
+        android:icon="@drawable/ic_filter" />
+    <item
+        android:id="@+id/nav_adjust"
+        android:title="@string/tab_adjust"
+        android:icon="@drawable/ic_adjust" />
+    <item
+        android:id="@+id/nav_text"
+        android:title="@string/tab_text"
+        android:icon="@drawable/ic_text" />
+    <item
+        android:id="@+id/nav_stickers"
+        android:title="@string/tab_stickers"
+        android:icon="@drawable/ic_sticker" />
+    <item
+        android:id="@+id/nav_crop"
+        android:title="@string/tab_crop"
+        android:icon="@drawable/ic_crop" />
+</menu>
