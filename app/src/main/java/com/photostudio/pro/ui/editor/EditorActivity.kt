@@ -37,6 +37,7 @@ class EditorActivity : AppCompatActivity() {
     private var isFlippedH = false
     private var isFlippedV = false
 
+    // Adjust values (0-200, default 100)
     private var brightness = 1.0f
     private var contrast = 1.0f
     private var saturation = 1.0f
@@ -110,6 +111,8 @@ class EditorActivity : AppCompatActivity() {
         binding.layoutCrop.visibility = if (tab == Tab.CROP) View.VISIBLE else View.GONE
     }
 
+    // ── FILTERS ──────────────────────────────────────────
+
     private fun setupFilters() {
         val filters = FilterType.values().toList()
         val adapter = FilterAdapter(filters, workingBitmap!!) { filterType ->
@@ -123,17 +126,15 @@ class EditorActivity : AppCompatActivity() {
     private fun applyFilter(filterType: FilterType) {
         val filter = when (filterType) {
             FilterType.ORIGINAL -> GPUImageFilter()
-            FilterType.WARM -> GPUImageBrightnessFilter(0.1f).apply { GPUImageSepiaFilter(0.3f) }
+            FilterType.WARM -> GPUImageBrightnessFilter(0.1f)
             FilterType.COOL -> GPUImageHueFilter(210f)
-            FilterType.VINTAGE -> GPUImageSepiaFilter(0.7f)
+            FilterType.VINTAGE -> GPUImageSepiaToneFilter(0.7f)
             FilterType.BW -> GPUImageGrayscaleFilter()
             FilterType.VIVID -> GPUImageSaturationFilter(1.8f)
             FilterType.FADE -> GPUImageSaturationFilter(0.5f)
             FilterType.DRAMATIC -> GPUImageContrastFilter(1.5f)
-            FilterType.SEPIA -> GPUImageSepiaFilter(1.0f)
-            FilterType.NOIR -> GPUImageGrayscaleFilter().also {
-                GPUImageContrastFilter(1.4f)
-            }
+            FilterType.SEPIA -> GPUImageSepiaToneFilter(1.0f)
+            FilterType.NOIR -> GPUImageGrayscaleFilter()
             FilterType.SUNSET -> GPUImageRGBFilter(1.2f, 1.0f, 0.7f)
             FilterType.FOREST -> GPUImageHueFilter(90f)
         }
@@ -143,6 +144,8 @@ class EditorActivity : AppCompatActivity() {
         binding.ivPreview.setImageBitmap(filtered)
         workingBitmap = filtered
     }
+
+    // ── ADJUST ───────────────────────────────────────────
 
     private fun setupAdjustSliders() {
         binding.seekBrightness.setOnSeekBarChangeListener(object : SeekBarCallback {
@@ -184,7 +187,7 @@ class EditorActivity : AppCompatActivity() {
                 GPUImageBrightnessFilter(brightness - 1.0f),
                 GPUImageContrastFilter(contrast),
                 GPUImageSaturationFilter(saturation),
-                GPUImageSharpennessFilter(sharpness)
+                GPUImageSharpenFilter(sharpness)
             )
         )
         gpuImage.setImage(originalBitmap!!)
@@ -193,6 +196,8 @@ class EditorActivity : AppCompatActivity() {
         workingBitmap = result
         binding.ivPreview.setImageBitmap(result)
     }
+
+    // ── TEXT ──────────────────────────────────────────────
 
     private fun setupTextTab() {
         binding.btnAddText.setOnClickListener {
@@ -239,6 +244,8 @@ class EditorActivity : AppCompatActivity() {
         }
     }
 
+    // ── STICKERS ─────────────────────────────────────────
+
     private fun setupStickers() {
         val stickers = listOf(
             "😀", "😍", "🥰", "😎", "🤩", "😂", "🥳", "😇",
@@ -266,6 +273,8 @@ class EditorActivity : AppCompatActivity() {
         makeTextDraggable(textView)
     }
 
+    // ── CROP / ROTATE / FLIP ──────────────────────────────
+
     private fun setupCropButtons() {
         binding.btnRotateLeft.setOnClickListener { rotate(-90) }
         binding.btnRotateRight.setOnClickListener { rotate(90) }
@@ -292,6 +301,8 @@ class EditorActivity : AppCompatActivity() {
             gpuImage.setImage(workingBitmap!!)
         }
     }
+
+    // ── SAVE / SHARE ──────────────────────────────────────
 
     private fun saveImage() {
         workingBitmap?.let { bmp ->
@@ -348,7 +359,11 @@ class EditorActivity : AppCompatActivity() {
         return bitmap
     }
 
+    // ── ENUMS ────────────────────────────────────────────
+
     enum class Tab { FILTERS, ADJUST, TEXT, STICKERS, CROP }
+
+    // ── SEEKBAR CALLBACK ──────────────────────────────────
 
     private interface SeekBarCallback : SeekBar.OnSeekBarChangeListener {
         override fun onStartTrackingTouch(seekBar: SeekBar?) {}
