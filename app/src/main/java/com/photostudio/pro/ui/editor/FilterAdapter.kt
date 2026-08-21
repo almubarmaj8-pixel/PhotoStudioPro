@@ -1,19 +1,19 @@
 package com.photostudio.pro.ui.editor
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.photostudio.pro.R
 import com.photostudio.pro.databinding.ItemFilterBinding
 
+/**
+ * يعرض الفلاتر مع معاينات مصغّرة مُولَّدة مسبقاً (تعرض الفلتر الفعلي وليس الصورة
+ * الأصلية). المعاينات تُولَّد مرة واحدة خارج المحوّل لتجنّب العمل المكلف داخل
+ * RecyclerView.
+ */
 class FilterAdapter(
     private val filters: List<FilterType>,
-    private val sourceBitmap: Bitmap,
+    private val thumbnails: List<Bitmap>,
     private val onClick: (FilterType) -> Unit
 ) : RecyclerView.Adapter<FilterAdapter.FilterVH>() {
 
@@ -31,10 +31,7 @@ class FilterAdapter(
     override fun onBindViewHolder(holder: FilterVH, position: Int) {
         val filter = filters[position]
         holder.binding.tvFilterName.setText(filter.displayNameRes)
-
-        val preview = Bitmap.createScaledBitmap(sourceBitmap, 72, 72, true)
-        holder.binding.ivFilterPreview.setImageBitmap(preview)
-
+        holder.binding.ivFilterPreview.setImageBitmap(thumbnails[position])
         holder.binding.cardFilter.strokeWidth = if (position == selectedPos) 3 else 0
 
         holder.binding.root.setOnClickListener {
@@ -47,4 +44,11 @@ class FilterAdapter(
     }
 
     override fun getItemCount() = filters.size
+
+    fun setSelected(position: Int) {
+        val old = selectedPos
+        selectedPos = position
+        notifyItemChanged(old)
+        notifyItemChanged(position)
+    }
 }
