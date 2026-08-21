@@ -1,40 +1,33 @@
 package com.photostudio.pro.ui.main
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import com.photostudio.pro.R
 import com.photostudio.pro.databinding.ActivityMainBinding
 import com.photostudio.pro.ui.editor.EditorActivity
 import com.photostudio.pro.ui.templates.TemplatesActivity
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private var cameraUri: Uri? = null
 
     private val galleryLauncher =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            if (uri != null) {
-                openEditor(uri.toString())
-            }
+            if (uri != null) openEditor(uri.toString())
         }
 
     private val cameraLauncher =
-        registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
-            // Preview returned - in production, save and open editor
-        }
-
-    private val permissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) openGallery()
-            else Snackbar.make(binding.root, R.string.msg_permission_required, Snackbar.LENGTH_SHORT).show()
+        registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+            if (success) cameraUri?.let { openEditor(it.toString()) }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,13 +39,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupViews() {
-        binding.cardOpenImage.setOnClickListener { checkPermissionAndOpenGallery() }
-        binding.cardCamera.setOnClickListener { checkPermissionAndOpenGallery() }
+        // GetContent يستخدم منتقي النظام ولا يتطلب إذن تخزين صريحاً
+        binding.cardOpenImage.setOnClickListener { galleryLauncher.launch("image/*") }
+        binding.cardCamera.setOnClickListener { openCamera() }
         binding.cardTemplates.setOnClickListener {
             startActivity(Intent(this, TemplatesActivity::class.java))
         }
         binding.cardCollage.setOnClickListener {
-            Snackbar.make(binding.root, "قريباً: تكوين الصور", Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(binding.root, R.string.msg_coming_soon, Snackbar.LENGTH_SHORT).show()
         }
     }
 
@@ -62,21 +56,16 @@ class MainActivity : AppCompatActivity() {
         binding.tvNoRecent.visibility = View.VISIBLE
     }
 
-    private fun checkPermissionAndOpenGallery() {
-        val perm = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU)
-            Manifest.permission.READ_MEDIA_IMAGES
-        else
-            Manifest.permission.READ_EXTERNAL_STORAGE
-
-        if (ContextCompat.checkSelfPermission(this, perm) == PackageManager.PERMISSION_GRANTED) {
-            openGallery()
-        } else {
-            permissionLauncher.launch(perm)
-        }
+    private fun openCamera() {
+        cameraUri = createCameraUri()
+        cameraUri?.let { uri -> cameraLauncher.launch(uri) }
+            ?: Snackbar.make(binding.root, R.string.msg_save_failed, Snackbar.LENGTH_SHORT).show()
     }
 
-    private fun openGallery() {
-        galleryLauncher.launch("image/*")
+    private fun createCameraUri(): Uri? {
+        val dir = File(cacheDir, "images").apply { mkdirs() }
+        val file = File(dir, "camera_${System.currentTimeMillis()}.jpg")
+        return FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
     }
 
     private fun openEditor(imageUri: String) {
